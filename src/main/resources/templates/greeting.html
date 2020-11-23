@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple File Uploader</title>
+</head>
+<body>
+Hello, <span th:text="${userName} != null ? ${userName} : 'unknown fellow'">user name</span>!
+<div>
+    <form method="POST" enctype="multipart/form-data" action="/public/file">
+        <div>
+            File to upload:<input type="file" name="file" />
+        </div>
+        <div>
+            <input type="submit" value="Upload" />
+        </div>
+    </form>
+</div>
+<div th:if="${userName == null}">
+    <span>Please <a href="/login">sign in</a> to see the list of uploaded files</span>
+</div>
+<div th:if="${userName != null}">
+    <a href="/logout">log out</a>
+</div>
+<div th:if="${files != null}">
+    <div>Uploaded files list:</div>
+    <div>
+        <ul>
+            <li th:each="file : ${files}">
+                <a th:href="@{/file/{name}(name=${file})}" th:text="${file}" />
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
