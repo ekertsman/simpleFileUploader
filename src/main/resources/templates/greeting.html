@@ -6,20 +6,20 @@
 </head>
 <body>
 Hello, <span th:text="${userName} != null ? ${userName} : 'unknown fellow'">user name</span>!
-<div>
-    <form method="POST" enctype="multipart/form-data" action="/public/file">
-        <div>
-            File to upload:<input type="file" name="file" />
-        </div>
-        <div>
-            <input type="submit" value="Upload" />
-        </div>
-    </form>
-</div>
 <div th:if="${userName == null}">
-    <span>Please <a href="/login">sign in</a> to see the list of uploaded files</span>
+    <span>Please <a href="/login">sign in</a> to work with files</span>
 </div>
 <div th:if="${userName != null}">
+    <div>
+        <form method="POST" enctype="multipart/form-data" action="/file">
+            <div>
+                File to upload:<input type="file" name="file" />
+            </div>
+            <div>
+                <input type="submit" value="Upload" />
+            </div>
+        </form>
+    </div>
     <a href="/logout">log out</a>
 </div>
 <div th:if="${files != null}">

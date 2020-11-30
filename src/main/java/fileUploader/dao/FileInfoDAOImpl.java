@@ -5,6 +5,7 @@ import fileUploader.utils.ConcurrentHashMapLocker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,16 +28,22 @@ import java.util.stream.Stream;
 public class FileInfoDAOImpl implements IFileInfoDAO {
     private static final String STORAGE_FOLDER_NAME = "filestorage";
 
-    private Path getStoragePath() {
+    private Path getStoragePath(String user) {
         Path currentPath = Paths.get(System.getProperty("user.dir"));
         Path filePath = Paths.get(currentPath.toString(), STORAGE_FOLDER_NAME);
+        createIfNotExists(filePath);
+        filePath = Paths.get(filePath.toString(), user);
+        createIfNotExists(filePath);
+        log.info("Storage path is: " + filePath);
+        return filePath;
+    }
+
+    private void createIfNotExists(Path filePath) {
         File f = new File(filePath.toString());
         if (!f.exists()){
             log.info("Folder " + STORAGE_FOLDER_NAME + " does not exist. Folder created.");
             f.mkdir();
         }
-        log.info("Storage path is: " + filePath);
-        return filePath;
     }
 
     private Optional<FileInfo> mapPathToFileInfoDto(Path path) {
@@ -53,9 +59,9 @@ public class FileInfoDAOImpl implements IFileInfoDAO {
         }
     }
 
-    private <T> List<T> fetchFiles(String actionName, Function<Path, T> func){
+    private <T> List<T> fetchFiles(String actionName, String user, Function<Path, T> func){
         log.info(String.format("Fetching %s starts...", actionName));
-        Path storagePath = getStoragePath();
+        Path storagePath = getStoragePath(user);
         List<T> result = new ArrayList<>();
         try(Stream<Path> walk = Files.walk(storagePath)){
             result = walk.filter(Files::isRegularFile)
@@ -70,21 +76,21 @@ public class FileInfoDAOImpl implements IFileInfoDAO {
     }
 
     @Override
-    public List<FileInfo> getAllFiles() {
-        return fetchFiles("all files info", path -> mapPathToFileInfoDto(path).orElse(null));
+    public List<FileInfo> getAllFiles(String user) {
+        return fetchFiles("all files info", user, path -> mapPathToFileInfoDto(path).orElse(null));
     }
 
     @Override
-    public List<String> getAllFileNames() {
-        return fetchFiles("all file names", path -> path.getFileName().toString());
+    public List<String> getAllFileNames(String user) {
+        return fetchFiles("all file names", user, path -> path.getFileName().toString());
     }
 
     @Override
-    public void uploadFile(MultipartFile file) throws IOException {
+    public void uploadFile(MultipartFile file, String user) throws IOException {
         String filename = file.getOriginalFilename();
         log.info("Uploading file " + filename);
         InputStream is = file.getInputStream();
-        Path currentPath = getStoragePath();
+        Path currentPath = getStoragePath(user);
 
         Path filePath = Paths.get(currentPath.toString(), filename);
 
@@ -95,5 +101,25 @@ public class FileInfoDAOImpl implements IFileInfoDAO {
             Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
         }
         log.info("File " + filename + " successfully uploaded");
+    }
+
+    @Override
+    public FileInfo getFile(String user, String name) {
+        log.info(String.format("Start fetching file %s for user %s", name, user));
+        FileInfo fileInfo = null;
+        try {
+            if (StringUtils.isEmpty(user)) {
+                throw new IllegalArgumentException("User can not be empty");
+            }
+            if (StringUtils.isEmpty(name)) {
+                throw new IllegalArgumentException("File name can not be empty");
+            }
+            Path filePath = Paths.get(getStoragePath(user).toString(), name);
+            fileInfo = mapPathToFileInfoDto(filePath).orElse(null);
+        } catch (Exception e){
+            log.error("Failed fetching", e);
+            throw e;
+        }
+        return fileInfo;
     }
 }

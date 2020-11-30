@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IFileService {
-    List<FileInfo> getAllFiles();
+    List<FileInfo> getUserFiles(String user);
 
-    List<String> getAllFileNames();
+    FileInfo getFile(String user, String name);
 
-    void uploadFile(MultipartFile file) throws IOException;
+    List<String> getAllFileNames(String user);
+
+    void uploadFile(MultipartFile file, String user) throws IOException;
 }

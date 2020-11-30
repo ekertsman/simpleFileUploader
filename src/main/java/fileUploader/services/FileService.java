@@ -17,18 +17,23 @@ public class FileService implements IFileService {
     private IFileInfoDAO fileInfoDAO;
 
     @Override
-    public List<FileInfo> getAllFiles(){
-        return fileInfoDAO.getAllFiles();
+    public List<FileInfo> getUserFiles(String user){
+        return fileInfoDAO.getAllFiles(user);
     }
 
     @Override
-    public List<String> getAllFileNames(){
-        return fileInfoDAO.getAllFileNames();
+    public FileInfo getFile(String user, String name){
+        return fileInfoDAO.getFile(user, name);
     }
 
     @Override
-    public void uploadFile(MultipartFile file) throws IOException {
-        fileInfoDAO.uploadFile(file);
+    public List<String> getAllFileNames(String user){
+        return fileInfoDAO.getAllFileNames(user);
+    }
+
+    @Override
+    public void uploadFile(MultipartFile file, String user) throws IOException {
+        fileInfoDAO.uploadFile(file, user);
     }
 
 }
